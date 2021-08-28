@@ -115,7 +115,11 @@ namespace Inforus.WavesNft
         {
             Asset asset = Node.IssueAsset(Account, tbNftName.Text, tbNftDesciption.Text, 1, 0, false, null, 0.001m);
             if (asset != null)
+            {
+                tbNftId.Text = asset.Id;
                 Node.WaitTransactionConfirmation(asset.Id);
+            }
+
             RefreshNft();
         }
 
