@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using WavesCS;
 
@@ -25,8 +20,6 @@ namespace Inforus.WavesNft
         }
         private PrivateKeyAccount account;
         private Node node;
-
-
         private readonly List<Asset> NftList;
         private readonly BindingSource Source;
 
@@ -66,11 +59,10 @@ namespace Inforus.WavesNft
             btnAccountCreate.Click += BtnAccountCreate_Click;
             button2.Click += Button2_Click;
             btnNewNft.Click += BtnNewNft_Click;
+            btnBurnNft.Click += BtnBurnNft_Click;
             btnTransferNft.Click += BtnTransferNft_Click;
             linkLabel1.Click += LinkLabel1_Click;
         }
-
-
 
         private PrivateKeyAccount AccountCreate(string accountKey, bool useSeed)
         {
@@ -106,6 +98,7 @@ namespace Inforus.WavesNft
             dgvNft.DataSource = Source;
             UpdateAccountBalance();
         }
+
         private void Button2_Click(object sender, EventArgs e)
         {
             RefreshNft();
@@ -119,6 +112,16 @@ namespace Inforus.WavesNft
                 tbNftId.Text = asset.Id;
                 Node.WaitTransactionConfirmation(asset.Id);
             }
+
+            RefreshNft();
+        }
+
+        private void BtnBurnNft_Click(object sender, EventArgs e)
+        {
+            var assetId = tbNftId.Text;
+            var asset = Node.GetAsset(assetId);
+            var response = node.BurnAsset(Account, asset, 1);
+            node.WaitTransactionConfirmationByResponse(response);
 
             RefreshNft();
         }
@@ -138,7 +141,7 @@ namespace Inforus.WavesNft
             var url = ((LinkLabel)sender).Text;
             Process.Start(url);
         }
-
+        
         private void DgvNft_SelectionChanged(object sender, EventArgs e)
         {
             if (Source.Current is Asset asset)
