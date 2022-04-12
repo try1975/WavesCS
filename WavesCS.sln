@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31613.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WavesCS", "WavesCS\WavesCS.csproj", "{6C6002B5-24CF-496E-95FE-A3869B7D0705}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WavesCSTests", "WavesCSTests\WavesCSTests.csproj", "{BA391F59-6B2D-4F95-B314-E50CF445E1B8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inforus.WavesNft", "Inforus.WavesNft\Inforus.WavesNft.csproj", "{F1B9C07B-1D27-4D1D-8C38-FB5E84FF0F94}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WavesNft.Api", "WavesNft.Api\WavesNft.Api.csproj", "{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Waves.standard", "Waves.standard\Waves.standard.csproj", "{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +73,38 @@ Global
 		{F1B9C07B-1D27-4D1D-8C38-FB5E84FF0F94}.Release|x64.Build.0 = Release|Any CPU
 		{F1B9C07B-1D27-4D1D-8C38-FB5E84FF0F94}.Release|x86.ActiveCfg = Release|Any CPU
 		{F1B9C07B-1D27-4D1D-8C38-FB5E84FF0F94}.Release|x86.Build.0 = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|ARM.Build.0 = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|x64.Build.0 = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Debug|x86.Build.0 = Debug|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|ARM.ActiveCfg = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|ARM.Build.0 = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|x64.ActiveCfg = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|x64.Build.0 = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|x86.ActiveCfg = Release|Any CPU
+		{3B5ADD10-8D9F-4865-8A17-8C879DA0814A}.Release|x86.Build.0 = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|ARM.Build.0 = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|x64.Build.0 = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Debug|x86.Build.0 = Debug|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|ARM.ActiveCfg = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|ARM.Build.0 = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|x64.ActiveCfg = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|x64.Build.0 = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|x86.ActiveCfg = Release|Any CPU
+		{5C06EE5F-A136-4B7C-B77A-F5E99A7DF28A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

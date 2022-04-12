@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetStandardHashLib" Version="1.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="PCLCrypto" Version="2.0.147" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Blake2Sharp">
+      <HintPath>..\WavesCS\lib\net451\Blake2Sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="curve25519">
+      <HintPath>..\WavesCS\lib\net451\curve25519.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
