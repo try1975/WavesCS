@@ -37,7 +37,7 @@ namespace WavesNft.Api.Controllers
         public async Task<ActionResult> DeedcoinMint(DeedcoinMintRequest deedcoinMintRequest)
         {
             var name = $"DeedCoin {deedcoinMintRequest.series}#{deedcoinMintRequest.number}";
-            var deedCoinDescription = new DeedCoinDescription
+            var deedcoinDescription = new DeedcoinDescription
             {
                 id = deedcoinMintRequest.id,
                 type = "unique",
@@ -46,10 +46,10 @@ namespace WavesNft.Api.Controllers
                 number = deedcoinMintRequest.number,
                 token = deedcoinMintRequest.token
             };
-            var description = JsonConvert.SerializeObject(deedCoinDescription);
+            var description = JsonConvert.SerializeObject(deedcoinDescription);
             try
             {
-                var key = deedCoinDescription.token;
+                var key = deedcoinDescription.token;
                 Asset asset;
                 string assetId = wavesNftService.GetAssetId(account.Address, key);
                 if (!string.IsNullOrEmpty(assetId))

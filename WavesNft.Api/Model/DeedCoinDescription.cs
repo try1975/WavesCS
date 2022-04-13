@@ -1,6 +1,6 @@
 ﻿namespace WavesNft.Api.Model
 {
-    public class DeedCoinDescription
+    public class DeedcoinDescription
     {
         public int id { get; set; }
         public string type { get; set; } // "unique"

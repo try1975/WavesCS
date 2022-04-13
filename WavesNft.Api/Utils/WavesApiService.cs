@@ -14,7 +14,7 @@ namespace WavesNft.Api.Utils
         private readonly Node node;
         private readonly PrivateKeyAccount account;
         private readonly List<Transaction> transactions = new List<Transaction>();
-        private readonly Dictionary<string, DeedCoinDescription> DeedCoinDescriptions = new Dictionary<string, DeedCoinDescription>();
+        private readonly Dictionary<string, DeedcoinDescription> DeedcoinDescriptions = new Dictionary<string, DeedcoinDescription>();
         private Transaction newestTransaction;
 
         public WavesApiService(Node node, PrivateKeyAccount account)
@@ -62,12 +62,12 @@ namespace WavesNft.Api.Utils
                 if (!issueTransaction.Description.StartsWith("{")) continue;
                 try
                 {
-                    var deedCoinDescription = JsonConvert.DeserializeObject<DeedCoinDescription>(issueTransaction.Description);
-                    if (deedCoinDescription != null)
+                    var deedcoinDescription = JsonConvert.DeserializeObject<DeedcoinDescription>(issueTransaction.Description);
+                    if (deedcoinDescription != null)
                     {
-                        if (string.IsNullOrEmpty(deedCoinDescription.token)) continue;
-                        if (DeedCoinDescriptions.ContainsKey(deedCoinDescription.token)) continue;
-                        DeedCoinDescriptions.Add(deedCoinDescription.token, deedCoinDescription);
+                        if (string.IsNullOrEmpty(deedcoinDescription.token)) continue;
+                        if (DeedcoinDescriptions.ContainsKey(deedcoinDescription.token)) continue;
+                        DeedcoinDescriptions.Add(deedcoinDescription.token, deedcoinDescription);
                     }
                 }
                 catch (Exception)
@@ -117,7 +117,7 @@ namespace WavesNft.Api.Utils
 
         public bool DeedCoinIssued(string token)
         {
-            return DeedCoinDescriptions.ContainsKey(token);
+            return DeedcoinDescriptions.ContainsKey(token);
         }
     }
 }
