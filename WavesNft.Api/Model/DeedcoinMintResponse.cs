@@ -1,6 +1,6 @@
 ﻿namespace WavesNft.Api.Model
 {
-    public class WavesNftMintResponse
+    public class DeedcoinMintResponse
     {
         public string AssetId { get; set; }
     }

@@ -189,7 +189,7 @@ namespace Waves.standard
 
         public Transaction[] GetTransactionsByAddressAfterId(string address, string afterId, int limit = 100)
         {
-            string path = $"{_host}/transactions/address/{address}/limit/{limit}";
+            string path = $"{_host}/transactions/address/{address}/limit/{limit}?after={afterId}";
 
             var header = new NameValueCollection { { "after", afterId } };
             return Http.GetFlatObjectsWithHeaders(path, header)
