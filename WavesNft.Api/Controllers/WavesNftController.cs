@@ -23,6 +23,7 @@ namespace WavesNft.Api.Controllers
             this.logger = logger;
             this.node = node;
             this.account = account;
+            this.wavesNftService = wavesNftService;
         }
 
         [HttpGet("balance", Name = nameof(GetBalance))]
@@ -32,9 +33,14 @@ namespace WavesNft.Api.Controllers
             return Ok(accountBalance);
         }
 
+        /// <summary>
+        /// Create deadcoin NFT
+        /// </summary>
+        /// <param name="deedcoinMintRequest"></param>
+        /// <returns></returns>
         [HttpPost("mint", Name = nameof(DeedcoinMint))]
         [ProducesResponseType(typeof(DeedcoinMintResponse), StatusCodes.Status200OK)]
-        public async Task<ActionResult> DeedcoinMint(DeedcoinMintRequest deedcoinMintRequest)
+        public ActionResult DeedcoinMint(DeedcoinMintRequest deedcoinMintRequest)
         {
             var name = $"DeedCoin {deedcoinMintRequest.series}#{deedcoinMintRequest.number}";
             var deedcoinDescription = new DeedcoinDescription
@@ -90,9 +96,9 @@ namespace WavesNft.Api.Controllers
             }
         }
 
-        [HttpPost("trasfer", Name = nameof(DeedcoinTransfer))]
+        [HttpPost("transfer", Name = nameof(DeedcoinTransfer))]
         [ProducesResponseType(typeof(DeedcoinTransferResponse), StatusCodes.Status200OK)]
-        public async Task<ActionResult> DeedcoinTransfer(DeedcoinTransferRequest deedcoinTrasferRequest)
+        public ActionResult DeedcoinTransfer(DeedcoinTransferRequest deedcoinTrasferRequest)
         {
             return Ok();
         }
