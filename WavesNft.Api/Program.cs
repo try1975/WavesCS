@@ -25,8 +25,7 @@ builder.Services.AddSingleton<PrivateKeyAccount>(services =>
     if (!string.IsNullOrEmpty(wavesSettings.Seed)) return PrivateKeyAccount.CreateFromSeed(wavesSettings.Seed, wavesSettings.NetChainId);
     return PrivateKeyAccount.CreateFromPrivateKey(wavesSettings.PrivateKey, wavesSettings.NetChainId);
 });
-builder.Services.AddScoped<IWavesNftService, WavesNftService>();
-builder.Services.AddSingleton<IWavesApiService, WavesApiService>();
+builder.Services.AddSingleton<IDeedcoinService, DeedcoinService>();
 #endregion di
 
 builder.Services.AddControllers();
@@ -47,7 +46,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // warm up
-app.Services.GetService<IWavesApiService>();
+app.Services.GetService<IDeedcoinService>();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
