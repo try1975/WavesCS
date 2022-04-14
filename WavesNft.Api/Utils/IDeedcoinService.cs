@@ -1,6 +1,4 @@
-﻿using WavesNft.Api.Model;
-
-namespace WavesNft.Api.Utils
+﻿namespace WavesNft.Api.Utils
 {
     public interface IDeedcoinService
     {

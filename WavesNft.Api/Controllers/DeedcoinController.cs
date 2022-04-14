@@ -32,15 +32,7 @@ namespace WavesNft.Api.Controllers
                 var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinMintRequest);
                 var deedcoinAsset = _deedcoinService.MintDeedcoin(deedcoinDescription);
 
-                var deedcoinMintResponse = new DeedcoinMintResponse
-                {
-                    AssetId = deedcoinAsset.Id,
-                    DeedcoinAsset = deedcoinAsset,
-                    token = deedcoinDescription.token
-
-                };
-
-                return Ok(deedcoinMintResponse);
+                return Ok(DeedcoinMintResponse.Build(deedcoinAsset));
             }
             catch (System.Net.WebException webException)
             {
@@ -76,7 +68,7 @@ namespace WavesNft.Api.Controllers
             if (!_deedcoinService.DeedcoinIssued(deedcoinDescription.token))
             {
                 return Problem(
-                     title: "DeedCoin never not minted",
+                     title: "DeedCoin never minted",
                      detail: "details",
                      statusCode: StatusCodes.Status409Conflict,
                      instance: HttpContext.Request.Path);
@@ -91,14 +83,8 @@ namespace WavesNft.Api.Controllers
             try
             {
                 var deedcoinAsset = _deedcoinService.TransferDeedcoin(deedcoinTrasferRequest.recipient, deedcoinDescription);
-                var deedcoinTransferResponse = new DeedcoinTransferResponse
-                {
-                    AssetId = deedcoinAsset.Id,
-                    DeedcoinAsset = deedcoinAsset,
-                    token = deedcoinDescription.token
-                };
 
-                return Ok(deedcoinTransferResponse);
+                return Ok(DeedcoinTransferResponse.Build(deedcoinAsset));
             }
             catch (Exception exception)
             {

@@ -1,4 +1,4 @@
-﻿namespace WavesNft.Api.Model
+﻿namespace WavesNft.Api.Utils
 {
     public class DeedcoinAsset
     {

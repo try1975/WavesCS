@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using Waves.standard;
 using Waves.standard.Transactions;
-using WavesNft.Api.Model;
 
 namespace WavesNft.Api.Utils
 {
