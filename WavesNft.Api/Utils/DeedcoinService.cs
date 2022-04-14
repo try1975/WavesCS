@@ -150,6 +150,10 @@ namespace WavesNft.Api.Utils
             return IssuedDeedcoins.ContainsKey(token);
         }
 
+        public bool DeedcoinNotTrasfered(string token) {
+            return AccountDeedcoins.ContainsKey(token);
+        }
+
         public DeedcoinAsset? GetDeedcoinByToken(string token)
         {
             if (IssuedDeedcoins.ContainsKey(token)) return IssuedDeedcoins[token];

@@ -14,6 +14,9 @@
         //public string comment { get; set; }
         //public int available { get; set; }
         public string token { get; set; }
+        /// <summary>
+        /// url of deedcoin
+        /// </summary>
         public string certificate_url { get; set; }
         //public int first_price { get; set; }
         //public string assignment_date { get; set; }

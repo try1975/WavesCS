@@ -1,3 +1,4 @@
+using System.Reflection;
 using Waves.standard;
 using WavesNft.Api.Options;
 using WavesNft.Api.Utils;
@@ -37,7 +38,17 @@ builder.Services.AddSwaggerGen(c =>
     {
         Version = "v1",
         Title="Deedcoin backend API",
-        Description=".net core api"
+        Description=".net core 6 api"
+    });
+    //Collect all referenced projects output XML document file paths  
+    var currentAssembly = Assembly.GetExecutingAssembly();
+    var xmlDocs = currentAssembly.GetReferencedAssemblies()
+        .Union(new AssemblyName[] { currentAssembly.GetName() })
+        .Select(a => Path.Combine(Path.GetDirectoryName(currentAssembly.Location), $"{a.Name}.xml"))
+        .Where(f => File.Exists(f)).ToArray();
+    Array.ForEach(xmlDocs, (xmlPath) =>
+    {
+        c.IncludeXmlComments(xmlPath);
     });
 });
 

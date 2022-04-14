@@ -17,6 +17,8 @@ docker run -dt
 -e "NUGET_FALLBACK_PACKAGES=/root/.nuget/fallbackpackages;/root/.nuget/fallbackpackages2;/root/.nuget/fallbackpackages3;/root/.nuget/fallbackpackages4" 
 -P --name WavesNft.Api --entrypoint tail wavesnftapi:dev -f /dev/null
 
+docker run -dt -p "5038:80" -e "ASPNETCORE_URLS=http://+:80" try1975/wavesnftapi
+http://localhost:5038/swagger/index.html
 
 # WavesCS
 A C# library for interacting with the Waves blockchain

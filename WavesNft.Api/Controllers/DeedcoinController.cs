@@ -45,7 +45,7 @@ namespace WavesNft.Api.Controllers
             catch (System.Net.WebException webException)
             {
                 return Problem(
-                     title: "Authenticated user is not authorized.",
+                     title: "Web problem",
                      detail: webException.ToString(),
                      statusCode: StatusCodes.Status404NotFound,
                      instance: HttpContext.Request.Path);
@@ -54,28 +54,61 @@ namespace WavesNft.Api.Controllers
             {
 
                 return Problem(
-                     title: "Authenticated user is not authorized.",
+                     title: "Unexpected problem",
                      detail: exception.ToString(),
                      statusCode: StatusCodes.Status417ExpectationFailed,
                      instance: HttpContext.Request.Path);
             }
         }
 
+        /// <summary>
+        /// Transfer deedcoin NFT to another waves account
+        /// </summary>
+        /// <param name="deedcoinTrasferRequest"></param>
+        /// <returns></returns>
         [HttpPost("transfer", Name = nameof(DeedcoinTransfer))]
         [ProducesResponseType(typeof(DeedcoinTransferResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status417ExpectationFailed)]
         public ActionResult DeedcoinTransfer(DeedcoinTransferRequest deedcoinTrasferRequest)
         {
-            if (!_deedcoinService.DeedcoinIssued(deedcoinTrasferRequest.token))
+            var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinTrasferRequest);
+            if (!_deedcoinService.DeedcoinIssued(deedcoinDescription.token))
             {
                 return Problem(
-                     title: "DeedCoin not minted",
+                     title: "DeedCoin never not minted",
                      detail: "details",
+                     statusCode: StatusCodes.Status409Conflict,
+                     instance: HttpContext.Request.Path);
+            }
+            if (!_deedcoinService.DeedcoinNotTrasfered(deedcoinDescription.token)) {
+                return Problem(
+                     title: "DeedCoin not in account",
+                     detail: "details",
+                     statusCode: StatusCodes.Status409Conflict,
+                     instance: HttpContext.Request.Path);
+            }
+            try
+            {
+                var deedcoinAsset = _deedcoinService.TransferDeedcoin(deedcoinTrasferRequest.recipient, deedcoinDescription);
+                var deedcoinTransferResponse = new DeedcoinTransferResponse
+                {
+                    AssetId = deedcoinAsset.Id,
+                    DeedcoinAsset = deedcoinAsset,
+                    token = deedcoinDescription.token
+                };
+
+                return Ok(deedcoinTransferResponse);
+            }
+            catch (Exception exception)
+            {
+
+                return Problem(
+                     title: "Unexpected problem",
+                     detail: exception.ToString(),
                      statusCode: StatusCodes.Status417ExpectationFailed,
                      instance: HttpContext.Request.Path);
             }
-            var deedcoinAsset = _deedcoinService.TransferDeedcoin(deedcoinTrasferRequest.recipient, null);
-            return Ok();
         }
     }
 }

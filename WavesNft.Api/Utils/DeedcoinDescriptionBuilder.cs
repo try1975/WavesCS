@@ -19,6 +19,18 @@ namespace WavesNft.Api.Utils
             return deedcoinDescription;
         }
 
+        public static DeedcoinDescription Build(DeedcoinTransferRequest deedcoinTransferRequest)
+        {
+            var deedcoinDescription = new DeedcoinDescription
+            {
+                id=deedcoinTransferRequest.id,
+                series = deedcoinTransferRequest.series,
+                number=deedcoinTransferRequest.number,
+                token = deedcoinTransferRequest.token
+            };
+            return deedcoinDescription;
+        }
+
         public static DeedcoinDescription Build(string json)
         {
             if (string.IsNullOrEmpty(json)) return null;
