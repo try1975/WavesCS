@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Waves.standard;
 using WavesNft.Api.Model;
 using WavesNft.Api.Utils;
@@ -8,22 +7,25 @@ namespace WavesNft.Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WavesNftController : ControllerBase
+    public class DeedcoinController : ControllerBase
     {
-        private readonly ILogger<WavesNftController> logger;
+        private readonly ILogger<DeedcoinController> logger;
         private readonly Node node;
         private readonly PrivateKeyAccount account;
-        private readonly IWavesNftService wavesNftService;
+        private readonly IWavesNftService _wavesNftService;
+        private readonly IWavesApiService _wavesApiService;
 
-        public WavesNftController(ILogger<WavesNftController> logger
+        public DeedcoinController(ILogger<DeedcoinController> logger
             , Node node
             , PrivateKeyAccount account
-            , IWavesNftService wavesNftService)
+            , IWavesNftService wavesNftService
+            , IWavesApiService wavesApiService)
         {
             this.logger = logger;
             this.node = node;
             this.account = account;
-            this.wavesNftService = wavesNftService;
+            _wavesNftService = wavesNftService;
+            _wavesApiService = wavesApiService;
         }
 
         [HttpGet("balance", Name = nameof(GetBalance))]
@@ -40,39 +42,20 @@ namespace WavesNft.Api.Controllers
         /// <returns></returns>
         [HttpPost("mint", Name = nameof(DeedcoinMint))]
         [ProducesResponseType(typeof(DeedcoinMintResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status417ExpectationFailed)]
         public ActionResult DeedcoinMint(DeedcoinMintRequest deedcoinMintRequest)
         {
-            var name = $"DeedCoin {deedcoinMintRequest.series}#{deedcoinMintRequest.number}";
-            var deedcoinDescription = new DeedcoinDescription
-            {
-                id = deedcoinMintRequest.id,
-                type = "unique",
-                url = deedcoinMintRequest.certificate_url,
-                series = deedcoinMintRequest.series,
-                number = deedcoinMintRequest.number,
-                token = deedcoinMintRequest.token
-            };
-            var description = JsonConvert.SerializeObject(deedcoinDescription);
             try
             {
-                var key = deedcoinDescription.token;
-                Asset asset;
-                string assetId = wavesNftService.GetAssetId(account.Address, key);
-                if (!string.IsNullOrEmpty(assetId))
-                {
-                    asset = node.GetAsset(assetId);
-                }
-                else
-                {
-                    asset = node.IssueAsset(account: account, name: name, description: description, quantity: 1, decimals: 0, reissuable: false, fee: 0.001m);
-                    assetId = asset.Id;
-                    //node.WaitTransactionConfirmation(assetId);
-                    node.PutData(account, new Dictionary<string, object>() { { key, assetId } });
-                }
+                var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinMintRequest);
+                var deedcoinAsset = _wavesApiService.MintDeedcoin(deedcoinDescription);
 
                 var deedcoinMintResponse = new DeedcoinMintResponse
                 {
-                    AssetId = assetId
+                    AssetId = deedcoinAsset.Id,
+                    DeedcoinAsset = deedcoinAsset,
+                    token = deedcoinDescription.token
+
                 };
 
                 return Ok(deedcoinMintResponse);

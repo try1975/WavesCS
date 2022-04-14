@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Concurrent;
 using Waves.standard;
 using Waves.standard.Transactions;
 using WavesNft.Api.Model;
@@ -7,82 +8,90 @@ namespace WavesNft.Api.Utils
 {
     public class WavesApiService : IWavesApiService
     {
-        private const int limit = 50;
-        private const int refreshLimit = 5;
+        private const int limit = 25;
+        private const int refreshLimit = 1;
         private readonly DateTime maxTransactionAge = new DateTime(2022, 4, 1);
 
         private readonly Node node;
         private readonly PrivateKeyAccount account;
-        private readonly List<Transaction> transactions = new List<Transaction>();
-        private readonly Dictionary<string, DeedcoinDescription> DeedcoinDescriptions = new Dictionary<string, DeedcoinDescription>();
-        private Transaction newestTransaction;
+        private readonly List<Transaction> _transactions = new List<Transaction>();
+        private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new ConcurrentDictionary<string, Transaction>();
+        private readonly ConcurrentDictionary<string, DeedcoinAsset> DeedcoinAssets = new ConcurrentDictionary<string, DeedcoinAsset>();
 
         public WavesApiService(Node node, PrivateKeyAccount account)
         {
             this.node = node;
             this.account = account;
             FillTransactions();
-            SetNewestTransaction();
-            FillDeedCoinDescriptions();
+            TransactionDictionaryAddRange(_transactions);
+            FillDeedCoinAssets();
         }
 
         private void FillTransactions()
         {
-
             var tr = node.GetTransactions(account.Address, limit);
-            newestTransaction = transactions.FirstOrDefault();
-            transactions.AddRange(tr);
-            if (transactions.Any())
+            _transactions.AddRange(tr);
+            if (_transactions.Any())
             {
-                var lastTransaction = transactions.LastOrDefault();
+                var lastTransaction = _transactions.LastOrDefault();
                 if (lastTransaction == null) return;
                 var afterId = lastTransaction.GenerateId();
                 tr = node.GetTransactionsByAddressAfterId(account.Address, afterId, limit);
                 while (tr.Length > 0 && lastTransaction.Timestamp >= maxTransactionAge)
                 {
-                    transactions.AddRange(tr);
+                    _transactions.AddRange(tr);
                     lastTransaction = tr.LastOrDefault();
                     if (lastTransaction == null) return;
                     afterId = GetTransactionId(lastTransaction);
                     tr = node.GetTransactionsByAddressAfterId(account.Address, afterId, limit);
-
                 }
             }
         }
 
-        private void FillDeedCoinDescriptions()
+        private void TransactionDictionaryAddRange(IEnumerable<Transaction> transactions)
         {
-            if (transactions == null) return;
-            if (!transactions.Any()) return;
+            foreach (var transaction in transactions)
+            {
+                var id = GetTransactionId(transaction);
+                if (transactionsDictionary.ContainsKey(id)) continue;
+                transactionsDictionary.TryAdd(id, transaction);
+            }
+        }
 
-            var issueTransactions = transactions.Where(x => x.GetType() == typeof(IssueTransaction)).Select(x => x as IssueTransaction).ToList();
+        private void FillDeedCoinAssets()
+        {
+            //if (_transactions == null) return;
+            //if (!_transactions.Any()) return;
+
+            //var issueTransactions = _transactions.Where(x => x.GetType() == typeof(IssueTransaction)).Select(x => x as IssueTransaction).ToList();
+            var issueTransactions = transactionsDictionary.Where(kvp => kvp.Value.GetType() == typeof(IssueTransaction)).Select(kvp => kvp.Value as IssueTransaction).ToList();
             foreach (var issueTransaction in issueTransactions)
             {
-                if (string.IsNullOrEmpty(issueTransaction.Description)) continue;
-                if (!issueTransaction.Description.StartsWith("{")) continue;
-                try
+                var deedcoinDescription = DeedcoinDescriptionBuilder.Build(issueTransaction.Description);
+                if (deedcoinDescription != null)
                 {
-                    var deedcoinDescription = JsonConvert.DeserializeObject<DeedcoinDescription>(issueTransaction.Description);
-                    if (deedcoinDescription != null)
+                    if (string.IsNullOrEmpty(deedcoinDescription.token)) continue;
+                    if (DeedcoinAssets.ContainsKey(deedcoinDescription.token)) continue;
+                    var deedcoinAsset = new DeedcoinAsset
                     {
-                        if (string.IsNullOrEmpty(deedcoinDescription.token)) continue;
-                        if (DeedcoinDescriptions.ContainsKey(deedcoinDescription.token)) continue;
-                        DeedcoinDescriptions.Add(deedcoinDescription.token, deedcoinDescription);
-                    }
-                }
-                catch (Exception)
-                {
+                        Id = issueTransaction.Asset.Id,
+                        Name = issueTransaction.Asset.Name,
+                        DeedcoinDescription = deedcoinDescription,
+                        Timestamp = issueTransaction.Timestamp
+                    };
+                    DeedcoinAssets.TryAdd(deedcoinDescription.token, deedcoinAsset);
                 }
             }
         }
 
-        private void SetNewestTransaction()
+        private void Refresh()
         {
+            var transactions = node.GetTransactions(account.Address, refreshLimit);
             if (transactions == null) return;
             if (!transactions.Any()) return;
-
-            var maxTimestamp = transactions.Max(x => x.Timestamp);
-            newestTransaction = transactions.FirstOrDefault(x => x.Timestamp.Equals(maxTimestamp));
+            var id = GetTransactionId(transactions.FirstOrDefault());
+            if (transactionsDictionary.ContainsKey(id)) return;
+            TransactionDictionaryAddRange(transactions);
         }
 
         private static string GetTransactionId(Transaction transaction)
@@ -115,9 +124,41 @@ namespace WavesNft.Api.Utils
             return node.GetTransactions(address, 1000);
         }
 
-        public bool DeedCoinIssued(string token)
+        public bool DeedcoinIssued(string token)
         {
-            return DeedcoinDescriptions.ContainsKey(token);
+            Refresh();
+            return DeedcoinAssets.ContainsKey(token);
+        }
+
+        public DeedcoinAsset GetDeedcoinByToken(string token)
+        {
+            if (DeedcoinAssets.ContainsKey(token)) return DeedcoinAssets[token];
+            return null;
+        }
+
+        public DeedcoinAsset MintDeedcoin(DeedcoinDescription deedcoinDescription)
+        {
+
+            DeedcoinAsset deedcoinAsset;
+            if (DeedcoinIssued(deedcoinDescription.token))
+            {
+                deedcoinAsset = GetDeedcoinByToken(deedcoinDescription.token);
+            }
+            else
+            {
+                deedcoinAsset = new DeedcoinAsset
+                {
+                    Name = $"DeedCoin {deedcoinDescription.series}#{deedcoinDescription.number}",
+                    DeedcoinDescription = deedcoinDescription
+                };
+                var description = JsonConvert.SerializeObject(deedcoinDescription);
+                var asset = node.IssueAsset(account: account, name: deedcoinAsset.Name, description: description, quantity: 1, decimals: 0, reissuable: false, fee: 0.001m);
+                deedcoinAsset.Id = asset.Id;
+                deedcoinAsset.Timestamp = asset.IssueTimestamp;
+                DeedcoinAssets.TryAdd(deedcoinDescription.token, deedcoinAsset);
+            }
+
+            return deedcoinAsset;
         }
     }
 }
