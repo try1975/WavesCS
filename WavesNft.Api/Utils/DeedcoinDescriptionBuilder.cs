@@ -2,7 +2,7 @@
 using WavesNft.Api.Model;
 
 namespace WavesNft.Api.Utils;
-
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 public class DeedcoinDescriptionBuilder
 {
     public static DeedcoinDescription Build(DeedcoinMintRequest deedcoinMintRequest)

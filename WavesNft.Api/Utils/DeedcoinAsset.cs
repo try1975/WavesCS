@@ -1,5 +1,4 @@
 ﻿namespace WavesNft.Api.Utils;
-
 /// <summary>
 /// Deedcoin NFT on WAVES blockchain
 /// </summary>

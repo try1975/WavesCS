@@ -3,6 +3,7 @@ using WavesNft.Api.Model;
 using WavesNft.Api.Utils;
 
 namespace WavesNft.Api.Controllers;
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 [ApiController]
 [Route("waves/[controller]")]

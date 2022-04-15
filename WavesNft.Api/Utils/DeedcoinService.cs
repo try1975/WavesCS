@@ -2,7 +2,7 @@
 using Waves.standard;
 
 namespace WavesNft.Api.Utils;
-
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 public class DeedcoinService : IDeedcoinService
 {
     private const decimal fee = 0.001m;

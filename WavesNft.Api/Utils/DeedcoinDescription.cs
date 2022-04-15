@@ -1,5 +1,5 @@
 ﻿namespace WavesNft.Api.Utils;
-
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 /// <summary>
 /// Serialize to asset description
 /// </summary>

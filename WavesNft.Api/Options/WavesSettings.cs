@@ -1,6 +1,7 @@
 ﻿using Waves.standard;
 
 namespace WavesNft.Api.Options;
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 public class WavesSettings
 {
