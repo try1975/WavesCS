@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.Configure<WavesSettings>(builder.Configuration.GetSection(nameof(WavesSettings)));
+
 #region di
 builder.Services.AddSingleton<WavesSettings>(services =>
 {
@@ -26,7 +27,8 @@ builder.Services.AddSingleton<PrivateKeyAccount>(services =>
     if (!string.IsNullOrEmpty(wavesSettings.Seed)) return PrivateKeyAccount.CreateFromSeed(wavesSettings.Seed, wavesSettings.NetChainId);
     return PrivateKeyAccount.CreateFromPrivateKey(wavesSettings.PrivateKey, wavesSettings.NetChainId);
 });
-builder.Services.AddSingleton<IDeedcoinService, DeedcoinService>();
+builder.Services.AddSingleton<IDeedcoinStore, DeedcoinStore>();
+builder.Services.AddScoped<IDeedcoinService, DeedcoinService>();
 #endregion di
 
 builder.Services.AddControllers();
@@ -37,8 +39,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
         Version = "v1",
-        Title="Deedcoin backend API",
-        Description=".net core 6 api"
+        Title = "Deedcoin backend API",
+        Description = ".net core 6 api"
     });
     //Collect all referenced projects output XML document file paths  
     var currentAssembly = Assembly.GetExecutingAssembly();
@@ -52,18 +54,16 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-
 var app = builder.Build();
 
 // warm up
-app.Services.GetService<IDeedcoinService>();
+app.Services.GetService<IDeedcoinStore>();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
 app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwaggerUI();
 //}
 
 app.UseHttpsRedirection();

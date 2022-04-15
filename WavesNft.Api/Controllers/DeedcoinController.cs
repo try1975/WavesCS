@@ -73,7 +73,8 @@ namespace WavesNft.Api.Controllers
                      statusCode: StatusCodes.Status409Conflict,
                      instance: HttpContext.Request.Path);
             }
-            if (!_deedcoinService.DeedcoinNotTrasfered(deedcoinDescription.token)) {
+            if (!_deedcoinService.DeedcoinNotTrasfered(deedcoinDescription.token))
+            {
                 return Problem(
                      title: "DeedCoin not in account",
                      detail: "details",
