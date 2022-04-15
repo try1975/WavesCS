@@ -2,7 +2,6 @@
 using System.Globalization;
 using Waves.standard;
 using Waves.standard.Transactions;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 
 namespace Waves.standard;
 

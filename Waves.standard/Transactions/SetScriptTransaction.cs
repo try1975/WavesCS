@@ -1,6 +1,4 @@
-﻿using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
-
-namespace Waves.standard.Transactions;
+﻿namespace Waves.standard.Transactions;
 
 public class SetScriptTransaction : Transaction
 {

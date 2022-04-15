@@ -1,6 +1,4 @@
-﻿using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
-
-namespace Waves.standard;
+﻿namespace Waves.standard;
 
 public enum OrderStatus
 {

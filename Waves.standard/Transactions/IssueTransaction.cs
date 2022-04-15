@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 
 namespace Waves.standard.Transactions;
 

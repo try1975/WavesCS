@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 // ReSharper disable StringIndexOfIsCultureSpecific.1
 
 namespace Waves.standard;

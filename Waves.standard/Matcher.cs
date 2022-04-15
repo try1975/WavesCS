@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 
 namespace Waves.standard;
 
