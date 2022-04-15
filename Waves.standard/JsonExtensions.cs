@@ -1,134 +1,129 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
 using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 // ReSharper disable StringIndexOfIsCultureSpecific.1
 
-namespace Waves.standard
+namespace Waves.standard;
+
+public static class JsonExtensions
 {
-    public static class JsonExtensions
+    private static readonly JsonSerializer Serializer = new JsonSerializer();
+
+    public static string ToJson(this DictionaryObject data)
     {
-        private static readonly JsonSerializer Serializer = new JsonSerializer();
+        var builder = new StringBuilder();
+        var writer = new StringWriter(builder);
+        Serializer.Serialize(writer, data);
+        return builder.ToString();
+    }
 
-        public static string ToJson(this DictionaryObject data)
-        {
-            var builder = new StringBuilder();
-            var writer = new StringWriter(builder);
-            Serializer.Serialize(writer, data);
-            return builder.ToString();
-        }
+    public static string ToJson(this DictionaryObject[] data)
+    {
+        var builder = new StringBuilder();
+        var writer = new StringWriter(builder);
+        Serializer.Serialize(writer, data);
+        return builder.ToString();
+    }
 
-        public static string ToJson(this DictionaryObject[] data)
-        {
-            var builder = new StringBuilder();
-            var writer = new StringWriter(builder);
-            Serializer.Serialize(writer, data);
-            return builder.ToString();
-        }
+    public static DictionaryObject ParseJsonObject(this string json)
+    {
+        return JsonConvert.DeserializeObject<DictionaryObject>(json);
+    }
 
-        public static DictionaryObject ParseJsonObject(this string json)
-        {
-            return JsonConvert.DeserializeObject<DictionaryObject>(json);
-        }
+    public static DictionaryObject[] ParseJsonObjects(this string json)
+    {
+        return JsonConvert.DeserializeObject<DictionaryObject[]>(json);
+    }
 
-        public static DictionaryObject[] ParseJsonObjects(this string json)
-        {
-            return JsonConvert.DeserializeObject<DictionaryObject[]>(json);
-        }
+    public static DictionaryObject[] ParseFlatObjects(this string json)
+    {
+        return JsonConvert.DeserializeObject<JArray[]>(json).Single().ToObject<DictionaryObject[]>();
+    }
 
-        public static DictionaryObject[] ParseFlatObjects(this string json)
-        {
-            return JsonConvert.DeserializeObject<JArray[]>(json).Single().ToObject<DictionaryObject[]>();
-        }
+    public static string ParseJsonString(this string json)
+    {
+        return JsonConvert.DeserializeObject<string>(json);
+    }
 
-        public static string ParseJsonString(this string json)
-        {
-            return JsonConvert.DeserializeObject<string>(json);
-        }
+    public static DictionaryObject GetObject(this DictionaryObject d, string field)
+    {
+        return d.Get<DictionaryObject>(field);
+    }
 
-        public static DictionaryObject GetObject(this DictionaryObject d, string field)
+    public static object GetValue(this DictionaryObject d, string field)
+    {
+        try
         {
-            return d.Get<DictionaryObject>(field);
-        }
-
-        public static object GetValue(this DictionaryObject d, string field)
-        {
-            try
-            {
-                if (field.Contains("."))
-                    return d.GetObject(field.Substring(0, field.IndexOf("."))).GetValue(field.Substring(field.IndexOf(".") + 1));
-                else
-                    return d[field];
-            }
-            catch (Exception)
-            {
-                throw new Exception(string.Format("Cannot get value of \"{0}\" field", field));
-            }
-        }
-
-        public static T Get<T>(this DictionaryObject d, string field)
-        {
-            var value = d.GetValue(field);
-            if (value is JContainer j)
-                return j.ToObject<T>();
+            if (field.Contains("."))
+                return d.GetObject(field.Substring(0, field.IndexOf("."))).GetValue(field.Substring(field.IndexOf(".") + 1));
             else
-                return (T)value;
+                return d[field];
         }
-
-        public static IEnumerable<DictionaryObject> GetObjects(this DictionaryObject d, string field)
+        catch (Exception)
         {
-            return d.Get<DictionaryObject[]>(field);
+            throw new Exception(string.Format("Cannot get value of \"{0}\" field", field));
         }
+    }
 
-        public static string GetString(this DictionaryObject d, string field)
-        {
-            return d.Get<string>(field);
-        }
+    public static T Get<T>(this DictionaryObject d, string field)
+    {
+        var value = d.GetValue(field);
+        if (value is JContainer j)
+            return j.ToObject<T>();
+        else
+            return (T)value;
+    }
 
-        public static DateTime GetDate(this DictionaryObject d, string field)
-        {
-            var timestamp = d.GetLong(field);
-            return new DateTime(1970, 1, 1).AddMilliseconds(timestamp);
-        }
+    public static IEnumerable<DictionaryObject> GetObjects(this DictionaryObject d, string field)
+    {
+        return d.Get<DictionaryObject[]>(field);
+    }
 
-        public static DateTime ToDate(this long t)
-        {
-            return new DateTime(1970, 1, 1).AddMilliseconds(t);
-        }
+    public static string GetString(this DictionaryObject d, string field)
+    {
+        return d.Get<string>(field);
+    }
 
-        public static long GetLong(this DictionaryObject d, string field)
-        {
-            return long.Parse(d.GetValue(field).ToString());
-        }
+    public static DateTime GetDate(this DictionaryObject d, string field)
+    {
+        var timestamp = d.GetLong(field);
+        return new DateTime(1970, 1, 1).AddMilliseconds(timestamp);
+    }
 
-        public static decimal GetDecimal(this DictionaryObject d, string field, Asset asset)
-        {
-            return asset.LongToAmount(long.Parse(d.GetValue(field).ToString()));
-        }
+    public static DateTime ToDate(this long t)
+    {
+        return new DateTime(1970, 1, 1).AddMilliseconds(t);
+    }
 
-        public static int GetInt(this DictionaryObject d, string field)
-        {
-            return int.Parse(d.GetValue(field).ToString());
-        }
+    public static long GetLong(this DictionaryObject d, string field)
+    {
+        return long.Parse(d.GetValue(field).ToString());
+    }
 
-        public static byte GetByte(this DictionaryObject d, string field)
-        {
-            return byte.Parse(d.GetValue(field).ToString());
-        }
+    public static decimal GetDecimal(this DictionaryObject d, string field, Asset asset)
+    {
+        return asset.LongToAmount(long.Parse(d.GetValue(field).ToString()));
+    }
 
-        public static char GetChar(this DictionaryObject d, string field)
-        {
-            char.TryParse(d.GetValue(field).ToString(), out char result);
-            return result;
-        }
+    public static int GetInt(this DictionaryObject d, string field)
+    {
+        return int.Parse(d.GetValue(field).ToString());
+    }
 
-        public static bool GetBool(this DictionaryObject d, string field)
-        {
-            return (bool)d.GetValue(field);
-        }
+    public static byte GetByte(this DictionaryObject d, string field)
+    {
+        return byte.Parse(d.GetValue(field).ToString());
+    }
+
+    public static char GetChar(this DictionaryObject d, string field)
+    {
+        char.TryParse(d.GetValue(field).ToString(), out char result);
+        return result;
+    }
+
+    public static bool GetBool(this DictionaryObject d, string field)
+    {
+        return (bool)d.GetValue(field);
     }
 }

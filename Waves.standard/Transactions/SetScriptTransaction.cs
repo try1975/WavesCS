@@ -1,88 +1,85 @@
-﻿using System;
-using System.IO;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
+﻿using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 
-namespace Waves.standard.Transactions
+namespace Waves.standard.Transactions;
+
+public class SetScriptTransaction : Transaction
 {
-    public class SetScriptTransaction : Transaction
+    public byte[] Script { get; }
+
+    public override byte Version { get; set; } = 1;
+
+    public SetScriptTransaction(byte[] senderPublicKey, byte[] script, char chainId, decimal fee = 0.01m) : base(chainId, senderPublicKey)
     {
-        public byte[] Script { get; }
+        Script = script;
+        Fee = fee;
+    }
 
-        public override byte Version { get; set; } = 1;
+    public SetScriptTransaction(DictionaryObject tx) : base(tx)
+    {
+        Script = tx.ContainsKey("script") && tx.GetString("script") != null ? tx.GetString("script").FromBase64() : null;
+        Fee = Assets.WAVES.LongToAmount(tx.GetLong("fee"));
+        ChainId = tx.GetChar("chainId");
+    }
 
-        public SetScriptTransaction(byte[] senderPublicKey, byte[] script, char chainId, decimal fee = 0.01m) : base(chainId, senderPublicKey)
+    public override byte[] GetBody()
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new BinaryWriter(stream))
         {
-            Script = script;
-            Fee = fee;
-        }
+            writer.Write(TransactionType.SetScript);
+            writer.Write(Version);
+            writer.Write(ChainId);
+            writer.Write(SenderPublicKey);
 
-        public SetScriptTransaction(DictionaryObject tx) : base(tx)
-        {
-            Script = tx.ContainsKey("script") && tx.GetString("script") != null ? tx.GetString("script").FromBase64() : null;
-            Fee = Assets.WAVES.LongToAmount(tx.GetLong("fee"));
-            ChainId = tx.GetChar("chainId");
-        }
-
-        public override byte[] GetBody()
-        {
-            using (var stream = new MemoryStream())
-            using (var writer = new BinaryWriter(stream))
+            if (Script == null)
             {
-                writer.Write(TransactionType.SetScript);
-                writer.Write(Version);
-                writer.Write(ChainId);
-                writer.Write(SenderPublicKey);
-
-                if (Script == null)
-                {
-                    writer.Write((byte)0);
-                }
-                else
-                {
-                    writer.Write((byte)1);
-                    writer.WriteShort((short)Script.Length);
-                    writer.Write(Script);
-                }
-                writer.WriteLong(Assets.WAVES.AmountToLong(Fee));
-                writer.WriteLong(Timestamp.ToLong());
-
-                return stream.ToArray();
+                writer.Write((byte)0);
             }
-        }
-
-        public override byte[] GetBytes()
-        {
-            var stream = new MemoryStream();
-            var writer = new BinaryWriter(stream);
-
-            writer.WriteByte(0);
-            writer.Write(GetBody());
-            writer.Write(GetProofsBytes());
+            else
+            {
+                writer.Write((byte)1);
+                writer.WriteShort((short)Script.Length);
+                writer.Write(Script);
+            }
+            writer.WriteLong(Assets.WAVES.AmountToLong(Fee));
+            writer.WriteLong(Timestamp.ToLong());
 
             return stream.ToArray();
         }
+    }
 
-        public override DictionaryObject GetJson()
+    public override byte[] GetBytes()
+    {
+        var stream = new MemoryStream();
+        var writer = new BinaryWriter(stream);
+
+        writer.WriteByte(0);
+        writer.Write(GetBody());
+        writer.Write(GetProofsBytes());
+
+        return stream.ToArray();
+    }
+
+    public override DictionaryObject GetJson()
+    {
+        var result = new DictionaryObject
         {
-            var result = new DictionaryObject
-            {
-                {"type", (byte) TransactionType.SetScript},
-                {"version", Version},
-                {"senderPublicKey", SenderPublicKey.ToBase58()},
-                {"script", Script?.ToBase64()},
-                {"fee", Assets.WAVES.AmountToLong(Fee)},
-                {"timestamp", Timestamp.ToLong()}
-            };
+            {"type", (byte) TransactionType.SetScript},
+            {"version", Version},
+            {"senderPublicKey", SenderPublicKey.ToBase58()},
+            {"script", Script?.ToBase64()},
+            {"fee", Assets.WAVES.AmountToLong(Fee)},
+            {"timestamp", Timestamp.ToLong()}
+        };
 
-            if (Sender != null)
-                result.Add("sender", Sender);
+        if (Sender != null)
+            result.Add("sender", Sender);
 
-            return result;
-        }
+        return result;
+    }
 
-        protected override bool SupportsProofs()
-        {
-            return true;
-        }
+    protected override bool SupportsProofs()
+    {
+        return true;
     }
 }

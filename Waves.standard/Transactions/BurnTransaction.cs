@@ -1,96 +1,92 @@
-﻿using System;
-using System.IO;
-using Waves.standard;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
+﻿using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 
-namespace Waves.standard.Transactions
+namespace Waves.standard.Transactions;
+
+public class BurnTransaction : Transaction
 {
-    public class BurnTransaction : Transaction
+    public Asset Asset { get; }
+    public decimal Quantity { get; }
+    public override byte Version { get; set; } = 2;
+
+    public BurnTransaction(char chainId, byte[] senderPublicKey, Asset asset, decimal quantity, decimal fee = 0.001m) : base(chainId, senderPublicKey)
     {
-        public Asset Asset { get; }
-        public decimal Quantity { get; }
-        public override byte Version { get; set; } = 2;
+        Asset = asset;
+        Quantity = quantity;
+        Fee = fee;
+    }
 
-        public BurnTransaction(char chainId, byte[] senderPublicKey, Asset asset, decimal quantity, decimal fee = 0.001m) : base(chainId, senderPublicKey)
-        {
-            Asset = asset;
-            Quantity = quantity;
-            Fee = fee;
-        }
+    public BurnTransaction(DictionaryObject tx) : base(tx)
+    {
+        var node = new Node(tx.GetChar("chainId"));
+        Asset = node.GetAsset(tx.GetString("assetId"));
+        Quantity = Asset.LongToAmount(tx.GetLong("amount"));
+        Fee = Assets.WAVES.LongToAmount(tx.GetLong("fee"));
+        Version = tx.GetByte("version");
+    }
 
-        public BurnTransaction(DictionaryObject tx) : base(tx)
+    public override byte[] GetBody()
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new BinaryWriter(stream))
         {
-            var node = new Node(tx.GetChar("chainId"));
-            Asset = node.GetAsset(tx.GetString("assetId"));
-            Quantity = Asset.LongToAmount(tx.GetLong("amount"));
-            Fee = Assets.WAVES.LongToAmount(tx.GetLong("fee"));
-            Version = tx.GetByte("version");
-        }
+            writer.Write(TransactionType.Burn);
 
-        public override byte[] GetBody()
-        {
-            using (var stream = new MemoryStream())
-            using (var writer = new BinaryWriter(stream))
+            if (Version > 1)
             {
-                writer.Write(TransactionType.Burn);
-
-                if (Version > 1)
-                {
-                    writer.WriteByte(Version);
-                    writer.WriteByte((byte)ChainId);
-                }
-
-                writer.Write(SenderPublicKey);
-                writer.Write(Asset.Id.FromBase58());
-                writer.WriteLong(Asset.AmountToLong(Quantity));
-                writer.WriteLong(Assets.WAVES.AmountToLong(Fee));
-                writer.WriteLong(Timestamp.ToLong());
-                return stream.ToArray();
-            }
-        }
-
-        public override byte[] GetBytes()
-        {
-            var stream = new MemoryStream();
-            var writer = new BinaryWriter(stream);
-
-            if (Version == 1)
-            {
-                writer.Write(GetBody());
-                writer.Write(GetProofsBytes());
-            }
-            else
-            {
-                writer.WriteByte(0);
-                writer.Write(GetBody());
-                writer.Write(GetProofsBytes());
+                writer.WriteByte(Version);
+                writer.WriteByte((byte)ChainId);
             }
 
+            writer.Write(SenderPublicKey);
+            writer.Write(Asset.Id.FromBase58());
+            writer.WriteLong(Asset.AmountToLong(Quantity));
+            writer.WriteLong(Assets.WAVES.AmountToLong(Fee));
+            writer.WriteLong(Timestamp.ToLong());
             return stream.ToArray();
         }
+    }
 
-        public override DictionaryObject GetJson()
+    public override byte[] GetBytes()
+    {
+        var stream = new MemoryStream();
+        var writer = new BinaryWriter(stream);
+
+        if (Version == 1)
         {
-            var result = new DictionaryObject
-            {
-                {"version", Version},
-                {"type", (byte) TransactionType.Burn},
-                {"senderPublicKey", SenderPublicKey.ToBase58()},
-                {"assetId", Asset.Id},
-                {"amount", Asset.AmountToLong(Quantity)},
-                {"fee", Assets.WAVES.AmountToLong(Fee)},
-                {"timestamp", Timestamp.ToLong()}
-            };
-
-            if (Sender != null)
-                result.Add("sender", Sender);
-
-            return result;
+            writer.Write(GetBody());
+            writer.Write(GetProofsBytes());
+        }
+        else
+        {
+            writer.WriteByte(0);
+            writer.Write(GetBody());
+            writer.Write(GetProofsBytes());
         }
 
-        protected override bool SupportsProofs()
+        return stream.ToArray();
+    }
+
+    public override DictionaryObject GetJson()
+    {
+        var result = new DictionaryObject
         {
-            return Version > 1;
-        }
+            {"version", Version},
+            {"type", (byte) TransactionType.Burn},
+            {"senderPublicKey", SenderPublicKey.ToBase58()},
+            {"assetId", Asset.Id},
+            {"amount", Asset.AmountToLong(Quantity)},
+            {"fee", Assets.WAVES.AmountToLong(Fee)},
+            {"timestamp", Timestamp.ToLong()}
+        };
+
+        if (Sender != null)
+            result.Add("sender", Sender);
+
+        return result;
+    }
+
+    protected override bool SupportsProofs()
+    {
+        return Version > 1;
     }
 }

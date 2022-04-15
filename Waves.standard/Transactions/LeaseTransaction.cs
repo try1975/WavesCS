@@ -1,99 +1,95 @@
-﻿using System;
-using System.IO;
-using Waves.standard;
-using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
+﻿using DictionaryObject = System.Collections.Generic.Dictionary<string, object>;
 
-namespace Waves.standard.Transactions
+namespace Waves.standard.Transactions;
+
+public class LeaseTransaction : Transaction
 {
-    public class LeaseTransaction : Transaction
+    public string Recipient { get; }
+    public decimal Amount { get; }
+    public bool IsActive { get; }
+    public override byte Version { get; set; } = 2;
+
+    public LeaseTransaction(char chainId, byte[] senderPublicKey, string recipient, decimal amount, decimal fee = 0.001m) :
+        base(chainId, senderPublicKey)
     {
-        public string Recipient { get; }
-        public decimal Amount { get; }
-        public bool IsActive { get; }
-        public override byte Version { get; set; } = 2;
+        Recipient = recipient;
+        Amount = amount;
+        Fee = fee;
+    }
 
-        public LeaseTransaction(char chainId, byte[] senderPublicKey, string recipient, decimal amount, decimal fee = 0.001m) :
-            base(chainId, senderPublicKey)
+    public LeaseTransaction(DictionaryObject tx) : base(tx)
+    {
+        var node = new Node(tx.GetChar("chainId"));
+        Recipient = tx.GetString("recipient");
+        Amount = Assets.WAVES.LongToAmount(tx.GetLong("amount"));
+        Fee = Assets.WAVES.LongToAmount(tx.GetLong("fee"));
+        Version = tx.GetByte("version");
+        IsActive = tx.ContainsKey("status") ? tx.GetString("status") == "active" : true;
+    }
+
+    public override byte[] GetBody()
+    {
+
+        using (var stream = new MemoryStream())
+        using (var writer = new BinaryWriter(stream))
         {
-            Recipient = recipient;
-            Amount = amount;
-            Fee = fee;
-        }
+            writer.Write(TransactionType.Lease);
 
-        public LeaseTransaction(DictionaryObject tx) : base(tx)
-        {
-            var node = new Node(tx.GetChar("chainId"));
-            Recipient = tx.GetString("recipient");
-            Amount = Assets.WAVES.LongToAmount(tx.GetLong("amount"));
-            Fee = Assets.WAVES.LongToAmount(tx.GetLong("fee"));
-            Version = tx.GetByte("version");
-            IsActive = tx.ContainsKey("status") ? tx.GetString("status") == "active" : true;
-        }
-
-        public override byte[] GetBody()
-        {
-
-            using (var stream = new MemoryStream())
-            using (var writer = new BinaryWriter(stream))
+            if (Version > 1)
             {
-                writer.Write(TransactionType.Lease);
-
-                if (Version > 1)
-                {
-                    writer.WriteByte(Version);
-                    writer.WriteByte(0);
-                }
-
-                writer.Write(SenderPublicKey);
-                writer.Write(Recipient.FromBase58());
-                writer.WriteLong(Assets.WAVES.AmountToLong(Amount));
-                writer.WriteLong(Assets.WAVES.AmountToLong(Fee));
-                writer.WriteLong(Timestamp.ToLong());
-                return stream.ToArray();
-            }
-        }
-
-        public override byte[] GetBytes()
-        {
-            var stream = new MemoryStream();
-            var writer = new BinaryWriter(stream);
-
-            if (Version == 1)
-            {
-                writer.Write(GetBody());
-                writer.Write(Proofs[0]);
-            }
-            else
-            {
+                writer.WriteByte(Version);
                 writer.WriteByte(0);
-                writer.Write(GetBody());
-                writer.Write(GetProofsBytes());
             }
 
+            writer.Write(SenderPublicKey);
+            writer.Write(Recipient.FromBase58());
+            writer.WriteLong(Assets.WAVES.AmountToLong(Amount));
+            writer.WriteLong(Assets.WAVES.AmountToLong(Fee));
+            writer.WriteLong(Timestamp.ToLong());
             return stream.ToArray();
         }
+    }
 
-        public override DictionaryObject GetJson()
+    public override byte[] GetBytes()
+    {
+        var stream = new MemoryStream();
+        var writer = new BinaryWriter(stream);
+
+        if (Version == 1)
         {
-            var result = new DictionaryObject {
-                {"version",  Version },
-                {"type", (byte) TransactionType.Lease},
-                {"senderPublicKey", SenderPublicKey.ToBase58()},
-                {"recipient", Recipient},
-                {"amount", Assets.WAVES.AmountToLong(Amount)},
-                {"fee", Assets.WAVES.AmountToLong(Fee)},
-                {"timestamp", Timestamp.ToLong()}
-            };
-
-            if (Sender != null)
-                result.Add("sender", Sender);
-
-            return result;
+            writer.Write(GetBody());
+            writer.Write(Proofs[0]);
+        }
+        else
+        {
+            writer.WriteByte(0);
+            writer.Write(GetBody());
+            writer.Write(GetProofsBytes());
         }
 
-        protected override bool SupportsProofs()
-        {
-            return Version > 1;
-        }
+        return stream.ToArray();
+    }
+
+    public override DictionaryObject GetJson()
+    {
+        var result = new DictionaryObject {
+            {"version",  Version },
+            {"type", (byte) TransactionType.Lease},
+            {"senderPublicKey", SenderPublicKey.ToBase58()},
+            {"recipient", Recipient},
+            {"amount", Assets.WAVES.AmountToLong(Amount)},
+            {"fee", Assets.WAVES.AmountToLong(Fee)},
+            {"timestamp", Timestamp.ToLong()}
+        };
+
+        if (Sender != null)
+            result.Add("sender", Sender);
+
+        return result;
+    }
+
+    protected override bool SupportsProofs()
+    {
+        return Version > 1;
     }
 }

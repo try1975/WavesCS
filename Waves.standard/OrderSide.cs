@@ -1,8 +1,7 @@
-﻿namespace Waves.standard
+﻿namespace Waves.standard;
+
+public enum OrderSide
 {
-    public enum OrderSide
-    {
-        Buy,
-        Sell
-    }
+    Buy,
+    Sell
 }
