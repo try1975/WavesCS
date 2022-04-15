@@ -6,20 +6,18 @@ namespace WavesNft.Api.Utils
 {
     public class DeedcoinStore : IDeedcoinStore
     {
+        #region init
         private const int limit = 25;
-        private const int refreshLimit = 1;
+        private const int refreshLimit = 3;
         private readonly DateTime maxTransactionAge = new(2022, 4, 1);
 
         private readonly List<Transaction> _transactions = new();
         private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new();
-        private readonly ConcurrentDictionary<string, DeedcoinAsset> issuedDeedcoins = new();
+        private readonly ConcurrentDictionary<string, DeedcoinAsset> _issuedDeedcoins = new();
         private readonly ConcurrentDictionary<string, DeedcoinAsset> _accountDeedcoins = new();
 
         private readonly Node node;
         private readonly PrivateKeyAccount account;
-
-        public ConcurrentDictionary<string, DeedcoinAsset> IssuedDeedcoins { get => issuedDeedcoins; }
-        public ConcurrentDictionary<string, DeedcoinAsset> AccountDeedcoins { get => _accountDeedcoins; }
 
 
         public DeedcoinStore(Node node, PrivateKeyAccount account)
@@ -36,8 +34,49 @@ namespace WavesNft.Api.Utils
             FillIssuedDeedcoins();
             FillAccountDeedcoins();
         }
+        #endregion init
 
-        public void RefreshIssuedDeedcoins()
+        #region IDeedcoinStore
+        public bool IssuedDeedcoinsContainsKey(string token)
+        {
+            RefreshIssuedDeedcoins();
+            return _issuedDeedcoins.ContainsKey(token);
+        }
+
+        public DeedcoinAsset IssuedDeedcoinsValue(string token)
+        {
+            return _issuedDeedcoins[token];
+        }
+
+        public bool IssuedDeedcoinsTryAdd(string token, DeedcoinAsset deedcoinAsset)
+        {
+            return _issuedDeedcoins.TryAdd(token, deedcoinAsset);
+        }
+
+        public bool AccountDeedcoinsContainsKey(string token)
+        {
+            RefreshAccountDeedcoins();
+            return _accountDeedcoins.ContainsKey(token);
+        }
+
+        public DeedcoinAsset AccountDeedcoinsValue(string token)
+        {
+            return _accountDeedcoins[token];
+        }
+
+        public bool AccountDeedcoinsTryAdd(string token, DeedcoinAsset deedcoinAsset)
+        {
+            return _accountDeedcoins.TryAdd(token, deedcoinAsset);
+        }
+
+        public bool AccountDeedcoinsTryRemove(string token, out DeedcoinAsset deedcoinAsset)
+        {
+            return _accountDeedcoins.TryRemove(token, out deedcoinAsset);
+        }
+        #endregion IDeedcoinStore
+
+        #region Refresh
+        private void RefreshIssuedDeedcoins()
         {
             var transactions = node.GetTransactions(account.Address, refreshLimit);
             if (transactions == null) return;
@@ -47,11 +86,13 @@ namespace WavesNft.Api.Utils
             var isTransactionsAdded = TransactionDictionaryAddRange(transactions);
             if (isTransactionsAdded) FillIssuedDeedcoins();
         }
-        public void RefreshAccountDeedcoins()
+        private void RefreshAccountDeedcoins()
         {
             //throw new NotImplementedException();
         }
+        #endregion Refresh
 
+        #region Fill
         private void FillTransactions()
         {
             var transactions = node.GetTransactions(account.Address, limit);
@@ -95,7 +136,7 @@ namespace WavesNft.Api.Utils
                 if (deedcoinDescription != null)
                 {
                     if (string.IsNullOrEmpty(deedcoinDescription.token)) continue;
-                    if (IssuedDeedcoins.ContainsKey(deedcoinDescription.token)) continue;
+                    if (_issuedDeedcoins.ContainsKey(deedcoinDescription.token)) continue;
                     var deedcoinAsset = new DeedcoinAsset
                     {
                         Id = issueTransaction.Asset.Id,
@@ -103,7 +144,7 @@ namespace WavesNft.Api.Utils
                         DeedcoinDescription = deedcoinDescription,
                         Timestamp = issueTransaction.Timestamp
                     };
-                    IssuedDeedcoins.TryAdd(deedcoinDescription.token, deedcoinAsset);
+                    _issuedDeedcoins.TryAdd(deedcoinDescription.token, deedcoinAsset);
                 }
             }
         }
@@ -116,7 +157,7 @@ namespace WavesNft.Api.Utils
                 var description = obj.FirstOrDefault(_ => _.Key.Equals("description")).Value.ToString();
                 var deedcoinDescription = DeedcoinDescriptionBuilder.Build(description);
                 if (deedcoinDescription == null) continue;
-                if (AccountDeedcoins.ContainsKey(deedcoinDescription.token)) continue;
+                if (_accountDeedcoins.ContainsKey(deedcoinDescription.token)) continue;
                 var assetId = obj.FirstOrDefault(_ => _.Key.Equals("assetId")).Value.ToString();
                 var name = obj.FirstOrDefault(_ => _.Key.Equals("name")).Value.ToString();
                 var deedcoinAsset = new DeedcoinAsset
@@ -131,9 +172,10 @@ namespace WavesNft.Api.Utils
                     deedcoinAsset.Timestamp = issuesAt.ToDate();
                 }
                 if (deedcoinAsset.Timestamp < maxTransactionAge) continue;
-                AccountDeedcoins.TryAdd(deedcoinDescription.token, deedcoinAsset);
+                _accountDeedcoins.TryAdd(deedcoinDescription.token, deedcoinAsset);
             }
         }
+        #endregion Fill
 
         private static string GetTransactionId(Transaction transaction)
         {
@@ -141,7 +183,5 @@ namespace WavesNft.Api.Utils
             if (transaction is IssueTransaction) return (transaction as IssueTransaction).Asset.Id;
             return transaction.GenerateId();
         }
-
-
     }
 }

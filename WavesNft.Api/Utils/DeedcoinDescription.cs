@@ -1,5 +1,8 @@
 ﻿namespace WavesNft.Api.Utils
 {
+    /// <summary>
+    /// Serialize to asset description
+    /// </summary>
     public class DeedcoinDescription
     {
         public int id { get; set; }
