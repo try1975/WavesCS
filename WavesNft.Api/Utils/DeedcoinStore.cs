@@ -7,11 +7,10 @@ namespace WavesNft.Api.Utils;
 public class DeedcoinStore : IDeedcoinStore
 {
     #region init
-    private const int limit = 25;
-    private const int refreshLimit = 3;
-    private readonly DateTime maxTransactionAge = new(2022, 4, 1);
+    private const int limit = 20;
+    private bool _accountDeedcoinsNeedRefresh = false;
+    private readonly DateTime maxTransactionAge = new(2022, 4, 10);
 
-    private readonly List<Transaction> _transactions = new();
     private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new();
     private readonly ConcurrentDictionary<string, DeedcoinAsset> _issuedDeedcoins = new();
     private readonly ConcurrentDictionary<string, DeedcoinAsset> _accountDeedcoins = new();
@@ -30,7 +29,6 @@ public class DeedcoinStore : IDeedcoinStore
     private void Init()
     {
         FillTransactions();
-        TransactionDictionaryAddRange(_transactions);
         FillIssuedDeedcoins();
         FillAccountDeedcoins();
     }
@@ -55,7 +53,7 @@ public class DeedcoinStore : IDeedcoinStore
 
     public bool AccountDeedcoinsContainsKey(string token)
     {
-        RefreshAccountDeedcoins();
+        FillAccountDeedcoins();
         return _accountDeedcoins.ContainsKey(token);
     }
 
@@ -78,43 +76,33 @@ public class DeedcoinStore : IDeedcoinStore
     #region Refresh
     private void RefreshIssuedDeedcoins()
     {
-        var transactions = node.GetTransactions(account.Address, refreshLimit);
+        var transactions = node.GetTransactions(account.Address, 1);
         if (transactions == null) return;
         if (!transactions.Any()) return;
-        var id = GetTransactionId(transactions.FirstOrDefault());
+        var id = GetTransactionId(transactions.First());
         if (transactionsDictionary.ContainsKey(id)) return;
-        var isTransactionsAdded = TransactionDictionaryAddRange(transactions);
-        if (isTransactionsAdded) FillIssuedDeedcoins();
+        Init();
     }
-    private void RefreshAccountDeedcoins()
-    {
-        //throw new NotImplementedException();
-    }
+
     #endregion Refresh
 
     #region Fill
     private void FillTransactions()
     {
         var transactions = node.GetTransactions(account.Address, limit);
-        _transactions.AddRange(transactions);
-        if (_transactions.Any())
+        if (!transactions.Any()) return;
+        var added = TransactionsDictionaryAddRange(transactions);
+        var lastTransaction = transactions.Last();
+        while (added && lastTransaction.Timestamp >= maxTransactionAge)
         {
-            var lastTransaction = _transactions.LastOrDefault();
-            if (lastTransaction == null) return;
-            var afterId = lastTransaction.GenerateId();
+            var afterId = GetTransactionId(lastTransaction);
             transactions = node.GetTransactionsByAddressAfterId(account.Address, afterId, limit);
-            while (transactions.Length > 0 && lastTransaction.Timestamp >= maxTransactionAge)
-            {
-                _transactions.AddRange(transactions);
-                lastTransaction = transactions.LastOrDefault();
-                if (lastTransaction == null) return;
-                afterId = GetTransactionId(lastTransaction);
-                transactions = node.GetTransactionsByAddressAfterId(account.Address, afterId, limit);
-            }
+            added = TransactionsDictionaryAddRange(transactions);
+            lastTransaction = transactions.Last();
         }
     }
 
-    private bool TransactionDictionaryAddRange(IEnumerable<Transaction> transactions)
+    private bool TransactionsDictionaryAddRange(IEnumerable<Transaction> transactions)
     {
         var added = false;
         foreach (var transaction in transactions)
@@ -122,6 +110,9 @@ public class DeedcoinStore : IDeedcoinStore
             var id = GetTransactionId(transaction);
             if (transactionsDictionary.ContainsKey(id)) continue;
             transactionsDictionary.TryAdd(id, transaction);
+            if (transaction is IssueTransaction) _accountDeedcoinsNeedRefresh = true;
+            if (transaction is BurnTransaction) _accountDeedcoinsNeedRefresh = true;
+            if (transaction is TransferTransaction) _accountDeedcoinsNeedRefresh = true;
             added = true;
         }
         return added;
@@ -149,9 +140,9 @@ public class DeedcoinStore : IDeedcoinStore
         }
     }
 
-    private void FillAccountDeedcoins()
+    private bool AccountDeedcoinsAddRange(IEnumerable<Dictionary<string, object>> objects)
     {
-        var objects = node.GetObjects("assets/nft/{0}/limit/{1}", account.Address, limit);
+        var added = false;
         foreach (var obj in objects)
         {
             var description = obj.FirstOrDefault(_ => _.Key.Equals("description")).Value.ToString();
@@ -173,7 +164,27 @@ public class DeedcoinStore : IDeedcoinStore
             }
             if (deedcoinAsset.Timestamp < maxTransactionAge) continue;
             _accountDeedcoins.TryAdd(deedcoinDescription.token, deedcoinAsset);
+            added = true;
         }
+        return added;
+    }
+
+    private void FillAccountDeedcoins()
+    {
+        if (!_accountDeedcoinsNeedRefresh) return;
+        _accountDeedcoins.Clear();
+        var url = $"assets/nft/{account.Address}/limit/{limit}";
+        var objects = node.GetObjects(url).ToArray();
+        if (objects == null) return;
+        if (!objects.Any()) return;
+        var added = AccountDeedcoinsAddRange(objects);
+        while (added)
+        {
+            var afterId = objects.Last().FirstOrDefault(_ => _.Key.Equals("assetId")).Value.ToString();
+            objects = node.GetObjects($"{url}?after={afterId}").ToArray();
+            added = AccountDeedcoinsAddRange(objects);
+        }
+        _accountDeedcoinsNeedRefresh = false;
     }
     #endregion Fill
 
