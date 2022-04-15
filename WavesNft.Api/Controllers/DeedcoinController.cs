@@ -5,7 +5,7 @@ using WavesNft.Api.Utils;
 namespace WavesNft.Api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("waves/[controller]")]
     public class DeedcoinController : ControllerBase
     {
         private readonly ILogger<DeedcoinController> _logger;

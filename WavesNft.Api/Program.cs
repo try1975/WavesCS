@@ -7,31 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.Configure<WavesSettings>(builder.Configuration.GetSection(nameof(WavesSettings)));
-
-#region di
-builder.Services.AddSingleton<WavesSettings>(services =>
-{
-    var wavesSettings = new WavesSettings();
-    builder.Configuration.GetSection(nameof(WavesSettings)).Bind(wavesSettings);
-    return wavesSettings;
-});
-builder.Services.AddSingleton<Node>(services =>
-{
-    var wavesSettings = services.GetRequiredService<WavesSettings>();
-    return new Node(wavesSettings.NetChainId);
-});
-builder.Services.AddSingleton<PrivateKeyAccount>(services =>
-{
-    var wavesSettings = services.GetRequiredService<WavesSettings>();
-    if (!string.IsNullOrEmpty(wavesSettings.Seed)) return PrivateKeyAccount.CreateFromSeed(wavesSettings.Seed, wavesSettings.NetChainId);
-    return PrivateKeyAccount.CreateFromPrivateKey(wavesSettings.PrivateKey, wavesSettings.NetChainId);
-});
-builder.Services.AddSingleton<IDeedcoinStore, DeedcoinStore>();
-builder.Services.AddScoped<IDeedcoinService, DeedcoinService>();
-#endregion di
+//builder.Services.Configure<WavesSettings>(builder.Configuration.GetSection(nameof(WavesSettings)));
+DependencyInjection(builder.Services, builder.Configuration);
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -62,8 +42,15 @@ app.Services.GetService<IDeedcoinStore>();
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwagger(c =>
+{
+    c.RouteTemplate = "waves/swagger/{documentname}/swagger.json";
+});
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/waves/swagger/v1/swagger.json", "Deedcoin backend API v1");
+    c.RoutePrefix = "waves/swagger";
+});
 //}
 
 app.UseHttpsRedirection();
@@ -73,3 +60,27 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void DependencyInjection(IServiceCollection services, ConfigurationManager configuration)
+{
+    services.AddSingleton(services =>
+    {
+        var wavesSettings = new WavesSettings();
+        configuration.GetSection(nameof(WavesSettings)).Bind(wavesSettings);
+        return wavesSettings;
+    });
+    services.AddSingleton(services =>
+    {
+        var wavesSettings = services.GetRequiredService<WavesSettings>();
+        return new Node(wavesSettings.NetChainId);
+    });
+    services.AddSingleton(services =>
+    {
+        var wavesSettings = services.GetRequiredService<WavesSettings>();
+        if (!string.IsNullOrEmpty(wavesSettings.Seed)) return PrivateKeyAccount.CreateFromSeed(wavesSettings.Seed, wavesSettings.NetChainId);
+        return PrivateKeyAccount.CreateFromPrivateKey(wavesSettings.PrivateKey, wavesSettings.NetChainId);
+    });
+
+    services.AddSingleton<IDeedcoinStore, DeedcoinStore>();
+    services.AddScoped<IDeedcoinService, DeedcoinService>();
+}

@@ -10,10 +10,10 @@ namespace WavesNft.Api.Utils
         private const int refreshLimit = 1;
         private readonly DateTime maxTransactionAge = new(2022, 4, 1);
 
-        private readonly List<Transaction> _transactions = new List<Transaction>();
-        private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new ConcurrentDictionary<string, Transaction>();
-        private readonly ConcurrentDictionary<string, DeedcoinAsset> issuedDeedcoins = new ConcurrentDictionary<string, DeedcoinAsset>();
-        private readonly ConcurrentDictionary<string, DeedcoinAsset> _accountDeedcoins = new ConcurrentDictionary<string, DeedcoinAsset>();
+        private readonly List<Transaction> _transactions = new();
+        private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new();
+        private readonly ConcurrentDictionary<string, DeedcoinAsset> issuedDeedcoins = new();
+        private readonly ConcurrentDictionary<string, DeedcoinAsset> _accountDeedcoins = new();
 
         private readonly Node node;
         private readonly PrivateKeyAccount account;
@@ -142,6 +142,6 @@ namespace WavesNft.Api.Utils
             return transaction.GenerateId();
         }
 
-        
+
     }
 }

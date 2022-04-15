@@ -23,9 +23,9 @@ namespace WavesNft.Api.Utils
         {
             var deedcoinDescription = new DeedcoinDescription
             {
-                id=deedcoinTransferRequest.id,
+                id = deedcoinTransferRequest.id,
                 series = deedcoinTransferRequest.series,
-                number=deedcoinTransferRequest.number,
+                number = deedcoinTransferRequest.number,
                 token = deedcoinTransferRequest.token
             };
             return deedcoinDescription;
