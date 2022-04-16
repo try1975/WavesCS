@@ -41,7 +41,7 @@ public class DeedcoinDescriptionBuilder
 
     private static string GetHashString(string inputString)
     {
-        return inputString;
+        //return inputString;
         var sb = new StringBuilder();
         foreach (byte b in GetHash(inputString))
             sb.Append(b.ToString("X2"));
