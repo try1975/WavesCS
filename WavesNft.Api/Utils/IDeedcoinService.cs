@@ -2,9 +2,6 @@
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 public interface IDeedcoinService
 {
-    bool DeedcoinIssued(string token);
-    bool DeedcoinNotTrasfered(string token);
-    DeedcoinAsset? GetDeedcoinByToken(string token);
-    DeedcoinAsset MintDeedcoin(DeedcoinDescription deedcoinDescription);
-    DeedcoinAsset? TransferDeedcoin(string recipient, DeedcoinDescription deedcoinDescription);
+    (DeedcoinAsset?, string message) MintDeedcoin(DeedcoinDescription deedcoinDescription);
+    (DeedcoinAsset?, string message) TransferDeedcoin(string recipient, DeedcoinDescription deedcoinDescription);
 }

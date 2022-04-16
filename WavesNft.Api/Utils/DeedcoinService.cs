@@ -18,48 +18,50 @@ public class DeedcoinService : IDeedcoinService
         _deedcoinStore = deedcoinStore;
     }
 
-    public bool DeedcoinIssued(string token)
+    public (DeedcoinAsset?, string message) MintDeedcoin(DeedcoinDescription deedcoinDescription)
     {
-        return _deedcoinStore.IssuedDeedcoinsContainsKey(token);
-    }
-
-    public bool DeedcoinNotTrasfered(string token)
-    {
-        return _deedcoinStore.AccountDeedcoinsContainsKey(token);
-    }
-
-    public DeedcoinAsset? GetDeedcoinByToken(string token)
-    {
-        if (_deedcoinStore.IssuedDeedcoinsContainsKey(token)) return _deedcoinStore.IssuedDeedcoinsValue(token);
-        return null;
-    }
-
-    public DeedcoinAsset MintDeedcoin(DeedcoinDescription deedcoinDescription)
-    {
-        var deedcoinAsset = GetDeedcoinByToken(deedcoinDescription.token);
-        if (deedcoinAsset != null) return deedcoinAsset;
-
+        DeedcoinAsset deedcoinAsset;
+        if (_deedcoinStore.IssuedDeedcoinsContainsKey(deedcoinDescription.token))
+        {
+            deedcoinAsset = _deedcoinStore.IssuedDeedcoinsValue(deedcoinDescription.token);
+            return (deedcoinAsset, MatchDeedcoinDescription(deedcoinAsset, deedcoinDescription));
+        }
         deedcoinAsset = new DeedcoinAsset
         {
             Name = $"DeedCoin {deedcoinDescription.series}#{deedcoinDescription.number}",
-            DeedcoinDescription = deedcoinDescription
+            DeedcoinDescription = deedcoinDescription,
+            Timestamp = DateTime.Now
         };
         var description = JsonConvert.SerializeObject(deedcoinDescription);
         var asset = node.IssueAsset(account: account, name: deedcoinAsset.Name, description: description, quantity: 1, decimals: 0, reissuable: false, fee: fee);
         deedcoinAsset.Id = asset.Id;
-        deedcoinAsset.Timestamp = asset.IssueTimestamp;
         _deedcoinStore.IssuedDeedcoinsTryAdd(deedcoinDescription.token, deedcoinAsset);
         _deedcoinStore.AccountDeedcoinsTryAdd(deedcoinDescription.token, deedcoinAsset);
-        return deedcoinAsset;
+        return (deedcoinAsset, string.Empty);
     }
 
-    public DeedcoinAsset? TransferDeedcoin(string recipient, DeedcoinDescription deedcoinDescription)
+    public (DeedcoinAsset?, string message) TransferDeedcoin(string recipient, DeedcoinDescription deedcoinDescription)
     {
-        if (!_deedcoinStore.AccountDeedcoinsContainsKey(deedcoinDescription.token)) return null;
+        if (!_deedcoinStore.AccountDeedcoinsContainsKey(deedcoinDescription.token)) return (null, "Account no contain this DeedCoin");
         var deedcoinAsset = _deedcoinStore.AccountDeedcoinsValue(deedcoinDescription.token);
+        var message = MatchDeedcoinDescription(deedcoinAsset, deedcoinDescription);
+        if (!string.IsNullOrEmpty(message)) return (null, message);
+
         var asset = node.GetAsset(deedcoinAsset.Id);
-        var result = node.Transfer(account, recipient, asset, 1, $"Take my {asset.Name}");
+        message = node.Transfer(account, recipient, asset, 1, $"Take my {asset.Name}");
         _deedcoinStore.AccountDeedcoinsTryRemove(deedcoinDescription.token, out deedcoinAsset);
-        return deedcoinAsset;
+        return (deedcoinAsset, string.Empty);
+    }
+
+    private string MatchDeedcoinDescription(DeedcoinAsset deedcoinAsset, DeedcoinDescription deedcoinDescription)
+    {
+        if (deedcoinAsset == null) return "This DeedCoin not found";
+        // compare id, series, number
+        const string failMessage = "This DeedCoin match fail";
+        if (deedcoinAsset.DeedcoinDescription == null) return failMessage;
+        if (!deedcoinAsset.DeedcoinDescription.id.Equals(deedcoinDescription.id)) return failMessage;
+        if (!deedcoinAsset.DeedcoinDescription.series.Equals(deedcoinDescription.series)) return failMessage;
+        if (!deedcoinAsset.DeedcoinDescription.number.Equals(deedcoinDescription.number)) return failMessage;
+        return string.Empty;
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System.Security.Cryptography;
+using System.Text;
 using WavesNft.Api.Model;
 
 namespace WavesNft.Api.Utils;
@@ -14,7 +16,7 @@ public class DeedcoinDescriptionBuilder
             url = deedcoinMintRequest.certificate_url,
             series = deedcoinMintRequest.series,
             number = deedcoinMintRequest.number,
-            token = deedcoinMintRequest.token
+            token = GetHashString(deedcoinMintRequest.token)
         };
         return deedcoinDescription;
     }
@@ -26,9 +28,25 @@ public class DeedcoinDescriptionBuilder
             id = deedcoinTransferRequest.id,
             series = deedcoinTransferRequest.series,
             number = deedcoinTransferRequest.number,
-            token = deedcoinTransferRequest.token
+            token = GetHashString(deedcoinTransferRequest.token)
         };
         return deedcoinDescription;
+    }
+
+    public static byte[] GetHash(string inputString)
+    {
+        using HashAlgorithm algorithm = SHA1.Create(); //SHA256.Create();
+        return algorithm.ComputeHash(Encoding.UTF8.GetBytes(inputString));
+    }
+
+    private static string GetHashString(string inputString)
+    {
+        return inputString;
+        var sb = new StringBuilder();
+        foreach (byte b in GetHash(inputString))
+            sb.Append(b.ToString("X2"));
+
+        return sb.ToString();
     }
 
     public static DeedcoinDescription Build(string json)

@@ -25,23 +25,32 @@ public class DeedcoinController : ControllerBase
     /// <returns></returns>
     [HttpPost("mint", Name = nameof(DeedcoinMint))]
     [ProducesResponseType(typeof(DeedcoinMintResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status417ExpectationFailed)]
     public ActionResult DeedcoinMint(DeedcoinMintRequest deedcoinMintRequest)
     {
         try
         {
             var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinMintRequest);
-            var deedcoinAsset = _deedcoinService.MintDeedcoin(deedcoinDescription);
-
+            (var deedcoinAsset, var message) = _deedcoinService.MintDeedcoin(deedcoinDescription);
+            if (string.IsNullOrEmpty(message) || deedcoinAsset == null)
+            {
+                return Problem(
+                     title: message,
+                     detail: "details",
+                     statusCode: StatusCodes.Status409Conflict,
+                     instance: HttpContext.Request.Path);
+            }
             return Ok(DeedcoinMintResponse.Build(deedcoinAsset));
         }
         catch (System.Net.WebException webException)
         {
             return Problem(
-                 title: "Web problem",
-                 detail: webException.ToString(),
-                 statusCode: StatusCodes.Status404NotFound,
-                 instance: HttpContext.Request.Path);
+                title: "Web problem",
+                detail: webException.ToString(),
+                statusCode: StatusCodes.Status404NotFound,
+                instance: HttpContext.Request.Path);
         }
         catch (Exception exception)
         {
@@ -65,27 +74,18 @@ public class DeedcoinController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status417ExpectationFailed)]
     public ActionResult DeedcoinTransfer(DeedcoinTransferRequest deedcoinTrasferRequest)
     {
-        var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinTrasferRequest);
-        if (!_deedcoinService.DeedcoinIssued(deedcoinDescription.token))
-        {
-            return Problem(
-                 title: "DeedCoin never minted",
-                 detail: "details",
-                 statusCode: StatusCodes.Status409Conflict,
-                 instance: HttpContext.Request.Path);
-        }
-        if (!_deedcoinService.DeedcoinNotTrasfered(deedcoinDescription.token))
-        {
-            return Problem(
-                 title: "DeedCoin not in account",
-                 detail: "details",
-                 statusCode: StatusCodes.Status409Conflict,
-                 instance: HttpContext.Request.Path);
-        }
         try
         {
-            var deedcoinAsset = _deedcoinService.TransferDeedcoin(deedcoinTrasferRequest.recipient, deedcoinDescription);
-
+            var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinTrasferRequest);
+            (var deedcoinAsset, var message) = _deedcoinService.TransferDeedcoin(deedcoinTrasferRequest.recipient, deedcoinDescription);
+            if (string.IsNullOrEmpty(message) || deedcoinAsset == null)
+            {
+                return Problem(
+                     title: message,
+                     detail: "details",
+                     statusCode: StatusCodes.Status409Conflict,
+                     instance: HttpContext.Request.Path);
+            }
             return Ok(DeedcoinTransferResponse.Build(deedcoinAsset));
         }
         catch (Exception exception)
