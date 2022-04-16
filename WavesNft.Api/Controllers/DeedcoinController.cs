@@ -34,7 +34,7 @@ public class DeedcoinController : ControllerBase
         {
             var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinMintRequest);
             (var deedcoinAsset, var message) = _deedcoinService.MintDeedcoin(deedcoinDescription);
-            if (string.IsNullOrEmpty(message) || deedcoinAsset == null)
+            if (!string.IsNullOrEmpty(message) || deedcoinAsset == null)
             {
                 return Problem(
                      title: message,
@@ -78,7 +78,7 @@ public class DeedcoinController : ControllerBase
         {
             var deedcoinDescription = DeedcoinDescriptionBuilder.Build(deedcoinTrasferRequest);
             (var deedcoinAsset, var message) = _deedcoinService.TransferDeedcoin(deedcoinTrasferRequest.recipient, deedcoinDescription);
-            if (string.IsNullOrEmpty(message) || deedcoinAsset == null)
+            if (!string.IsNullOrEmpty(message) || deedcoinAsset == null)
             {
                 return Problem(
                      title: message,
