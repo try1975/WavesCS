@@ -14,15 +14,17 @@ public class DeedcoinStore : IDeedcoinStore
     private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new();
     private readonly ConcurrentDictionary<string, DeedcoinAsset> _issuedDeedcoins = new();
     private readonly ConcurrentDictionary<string, DeedcoinAsset> _accountDeedcoins = new();
-
+    private readonly ILogger<DeedcoinStore> logger;
     private readonly Node node;
     private readonly PrivateKeyAccount account;
 
 
-    public DeedcoinStore(Node node, PrivateKeyAccount account)
+    public DeedcoinStore(ILogger<DeedcoinStore> logger, Node node, PrivateKeyAccount account)
     {
+        this.logger = logger;
         this.node = node;
         this.account = account;
+        logger.LogDebug($"account.Address={account.Address}");
         Init();
     }
 
