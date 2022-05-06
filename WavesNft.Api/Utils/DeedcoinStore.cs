@@ -9,7 +9,7 @@ public class DeedcoinStore : IDeedcoinStore
     #region init
     private const int limit = 20;
     private bool _accountDeedcoinsNeedRefresh = false;
-    private readonly DateTime maxTransactionAge = new(2022, 4, 15);
+    private readonly DateTime maxTransactionAge = new(2022, 5, 5);
 
     private readonly ConcurrentDictionary<string, Transaction> transactionsDictionary = new();
     private readonly ConcurrentDictionary<string, DeedcoinAsset> _issuedDeedcoins = new();
@@ -99,6 +99,7 @@ public class DeedcoinStore : IDeedcoinStore
         {
             var afterId = GetTransactionId(lastTransaction);
             transactions = node.GetTransactionsByAddressAfterId(account.Address, afterId, limit);
+            if (!transactions.Any()) break;
             added = TransactionsDictionaryAddRange(transactions);
             lastTransaction = transactions.Last();
         }
